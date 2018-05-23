@@ -71,6 +71,22 @@ def add_deposit_parser(subparsers, parent_parser):
         type=str,
         help='the name of customer to deposit to')
 
+def add_interest_parser(subparsers, parent_parser):
+    parser = subparsers.add_parser(
+        'interest',
+        help='Adds interest of a certain percentage to an account',
+        parents=[parent_parser])
+
+    parser.add_argument(
+        'value',
+        type=int,
+        help='the percentage of interest to deposit')
+
+    parser.add_argument(
+        'customerName',
+        type=str,
+        help='the name of customer to deposit to')
+
 def add_withdraw_parser(subparsers, parent_parser):
     parser = subparsers.add_parser(
         'withdraw',
@@ -149,6 +165,7 @@ def create_parser(prog_name):
     subparsers.required = True
 
     add_deposit_parser(subparsers, parent_parser)
+    add_interest_parser(subparsers, parent_parser)
     add_withdraw_parser(subparsers, parent_parser)
     add_balance_parser(subparsers, parent_parser)
     add_transfer_parser(subparsers, parent_parser)
@@ -173,6 +190,15 @@ def do_deposit(args):
     client = SimpleWalletClient(baseUrl=DEFAULT_URL, keyFile=keyfile)
 
     response = client.deposit(args.value)
+
+    print("Response: {}".format(response))
+
+def do_interest(args):
+    keyfile = _get_keyfile(args.customerName)
+
+    client = SimpleWalletClient(baseUrl=DEFAULT_URL, keyFile=keyfile)
+
+    response = client.interest(args.value)
 
     print("Response: {}".format(response))
 
@@ -221,6 +247,8 @@ def main(prog_name=os.path.basename(sys.argv[0]), args=None):
     # Get the commands from cli args and call corresponding handlers
     if args.command == 'deposit':
         do_deposit(args)
+    elif args.command == 'interest':
+        do_interest(args)
     elif args.command == 'withdraw':
         do_withdraw(args)
     elif args.command == 'balance':

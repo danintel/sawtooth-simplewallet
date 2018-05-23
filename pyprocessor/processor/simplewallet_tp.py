@@ -56,6 +56,8 @@ class SimpleWalletTransactionHandler(TransactionHandler):
 
         if operation == "deposit":
             self._make_deposit(context, amount, from_key)
+        elif operation == "interest":
+            self._make_interest(context, amount, from_key)
         elif operation == "withdraw":
             self._make_withdraw(context, amount, from_key)
         elif operation == "transfer":
@@ -63,7 +65,7 @@ class SimpleWalletTransactionHandler(TransactionHandler):
                 to_key = payload_list[2]
             self._make_transfer(context, amount, to_key, from_key)
         else:
-            LOGGER.info("Unhandled action. Operation should be deposit, withdraw or transfer")
+            LOGGER.info("Unhandled action. Operation should be deposit, withdraw, interest, or transfer")
 
     def _make_deposit(self, context, amount, from_key):
         wallet_key = self._get_wallet_key(from_key)
@@ -77,6 +79,30 @@ class SimpleWalletTransactionHandler(TransactionHandler):
         else:
             balance = int(current_entry[0].data)
             new_balance = int(amount) + int(balance)
+
+        state_data = str(new_balance).encode()
+        addresses = context.set_state({wallet_key: state_data})
+
+        if len(addresses) < 1:
+            raise InternalError("State Error")
+
+    def _make_interest(self, context, amount, from_key):
+        wallet_key = self._get_wallet_key(from_key)
+        LOGGER.info('Got the key {} and the wallet key {} '.format(from_key, wallet_key))
+        current_entry = context.get_state([wallet_key])
+        new_balance = 0
+        LOGGER.info('DEBUG: amount (interest) passed is {} '.format(amount))
+
+        if current_entry == []:
+            LOGGER.info('No previous deposits or interest, creating new deposit {} '.format(from_key))
+            new_balance = 0
+        else:
+            balance = int(current_entry[0].data)
+            LOGGER.info('DEBUG: balance retrieved is {} '.format(balance))
+            interest = int(float(balance) * (float(amount) / 100.0))
+            LOGGER.info('DEBUG: interest is {} '.format(interest))
+            new_balance = int(interest) + int(balance)
+            LOGGER.info('DEBUG: new_balance calculated is {} '.format(new_balance))
 
         state_data = str(new_balance).encode()
         addresses = context.set_state({wallet_key: state_data})

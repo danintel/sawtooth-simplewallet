@@ -81,6 +81,11 @@ class SimpleWalletClient:
             "deposit",
             value)
 
+    def interest(self, value):
+        return self._wrap_and_send(
+            "interest",
+            value)
+
     def withdraw(self, value):
         try:
             retValue = self._wrap_and_send(
